@@ -1,0 +1,31 @@
+#!/usr/bin/env php
+<?php
+
+use App\Engine\ConcurrentEngine;
+use App\Processor\Processor;
+use App\Scheduler\QueueScheduler;
+use App\Server\Protocol;
+use App\Server\PoolServer;
+use App\Server\SwooleServer;
+use App\Table\Cache;
+use Swoole\Table;
+
+require __DIR__ . '/../vendor/autoload.php';
+
+// Cache store engine
+$cache = new Cache(10000);
+
+// Spider engine
+$engine = new ConcurrentEngine(
+    new QueueScheduler(),
+    new Processor($cache),
+    100,
+);
+
+// tcp server
+//$server = new PoolServer('0.0.0.0', 8080, new Protocol(), $engine);
+
+// swoole server
+$server = new SwooleServer('0.0.0.0', 8080, new Protocol(), $engine, $cache);
+
+$server->start();
