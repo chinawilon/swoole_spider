@@ -41,6 +41,7 @@ abstract class ServerAbstract
      * @param int $port
      * @param ProtocolInterface $protocol
      * @param EngineInterface $engine
+     * @param CacheInterface $cache
      * @param null $workerNum
      */
     public function __construct(string $host, int $port, ProtocolInterface $protocol, EngineInterface $engine, CacheInterface $cache, $workerNum = null )

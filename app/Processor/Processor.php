@@ -29,15 +29,20 @@ class Processor implements ProcessorInterface
     public function process(Request $request)
     {
         $result = ['status_code' => 0];
+        $http = new Client($request->getHost(), $request->getPort());
+        defer(static function () use($http) {
+            $http->close();
+        });
         try {
-            $http = new Client($request->getHost(), $request->getPort());
             $http->setMethod($request->getMethod());
-            $http->setHeaders($request->getHeader());
+            $http->setHeaders( $request->getHeader() ?? []);
+            $http->setData($request->getBody());
+            $http->set(['timeout'=>$request->getTimeout()]);
             echo 'fetching url: '.$request->getMethod() .':'. $request->getUrl() . PHP_EOL;
             $http->execute($request->getPath() . '?' . $request->getQuery());
             $result['response_body'] = $http->getBody();
             $result['status_code'] = $http->getStatusCode();
-            $http->close();
+
         } catch (Throwable $e) {
             $result['response_body'] = $e->getMessage();
         }

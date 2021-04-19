@@ -26,10 +26,13 @@ class QueueScheduler implements SchedulerInterface
      */
     private $isRunning = false;
 
+/*    private $requestQ = [];
+    private $workerQ = [];*/
+
     public function __construct()
     {
         $this->requestChan = new Channel();
-        $this->workerChan = new Channel();
+        $this->workerChan = new Channel(100);
     }
 
     public function shutdown(): void
@@ -40,41 +43,47 @@ class QueueScheduler implements SchedulerInterface
     public function run(): void
     {
         $this->isRunning = true;
-        
-        $workerQ  = [];
-        $requestQ = [];
 
-        go(function () use(&$workerQ, &$requestQ) {
+
+        go(function () {
             for (;;) {
+                $worker = $this->workerChan->pop();
+                $request = $this->requestChan->pop();
+                echo 'push'.PHP_EOL;
+                $worker->push($request);
+            }
+            /*for (;;) {
+                var_dump($this->requestQ);
                 if ( $this->isRunning === false) {
                     break;
                 }
-                if (count($workerQ) > 0 && count($requestQ) > 0 ) {
-                    $worker = array_shift($workerQ); // worker
-                    $request = array_shift($requestQ); // request
+                if (count($this->workerQ) > 0 && count($this->requestQ) > 0 ) {
+                    $worker = array_shift($this->workerQ); // worker
+                    $request = array_shift($this->requestQ); // request
+                    var_dump($request);
                     $worker->push($request);
                 }
                 Coroutine::sleep(1);
-            }
+            }*/
         });
 
-        go(function () use(&$workerQ) {
+        /*go(function () {
             for (;;) {
                 if ( $this->isRunning === false ) {
                     break;
                 }
-                $workerQ[] = $this->workerChan->pop();
+                $this->workerQ[] = $this->workerChan->pop();
             }
         });
 
-        go(function () use(&$requestQ){
+        go(function () {
             for (;;) {
                 if ( $this->isRunning === false) {
                     break;
                 }
-                $requestQ[] = $this->requestChan->pop();
+                $this->requestQ[] = $this->requestChan->pop();
             }
-        });
+        });*/
     }
 
     public function workerReady(Channel $worker): void

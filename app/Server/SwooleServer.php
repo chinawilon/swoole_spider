@@ -112,10 +112,14 @@ class SwooleServer extends ServerAbstract
                     case 'SUB':
                         while (true) {
                             if ( $result = $this->cache->shift() ) {
-                                $server->send($fd, json_encode($result, JSON_THROW_ON_ERROR));
-                                usleep(1); //yield
+                                echo $result;
+                                $send = json_encode($result, JSON_THROW_ON_ERROR);
+                                echo strlen($send).PHP_EOL;
+                                $server->send($fd, pack('n', strlen($send)).$send);
+                                usleep(1); // yield
                             } else {
-                                break;
+                                $server->close($fd); // close the fd
+                                break 3;
                             }
                         }
                         break;

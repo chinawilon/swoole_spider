@@ -1,91 +1,107 @@
 <?php
 
+
 namespace App\Table;
 
+use Swoole\Atomic;
+use Swoole\Lock;
 use Swoole\Table;
 
 class Cache implements CacheInterface
 {
+
     /**
      * @var Table
      */
     private $table;
 
-    private $cache = [];
-
     /**
-     * Cache constructor.
-     *
-     * @param $size
+     * @var Lock
      */
-    public function __construct($size)
+    private $mutex;
+    /**
+     * @var Atomic
+     */
+    private $errNum;
+
+    public function __construct(Table $table)
     {
-        $this->table = new Table($size);
-        $this->table->column('id', Table::TYPE_INT);
-        $this->table->column('status_code', Table::TYPE_INT);
-        $this->table->column('response_body', Table::TYPE_STRING, 1024);
-        $this->table->create();
+        $this->table = $table;
+        $this->mutex = new Lock();
+        $this->errNum = new Atomic();
     }
 
     /**
-     * Put the result
-     *
+     * @return mixed
+     */
+    public function getErrNum(): int
+    {
+        return $this->errNum->get();
+    }
+
+    /**
      * @param string $key
      * @param array $data
      */
     public function put(string $key, array $data): void
     {
-        isset($this->cache[$key]) ? $this->table->del($key) : $this->cache[$key] = $key;
-        $this->table->set($key, $data);
+        @$this->table->set($key, $data);
+        echo 'put done'.PHP_EOL;
+        if (error_get_last()) {
+            $this->errNum->add();
+
+            // @fixme how to do? save it??
+            // $this->pop();
+            // $this->set($key, $data); // death loop?
+            // $this->pop();
+            file_put_contents(ROOT_PATH . '/runtime/cache.error.log',
+                sprintf("[%s] %s => %s\n", date("Y-m-d H:i:s"), $key, serialize($data)),
+                FILE_APPEND,
+            );
+
+        }
     }
 
     /**
-     * Pull the result and delete it
-     *
      * @param string $key
-     * @return mixed|null
+     * @return bool|mixed
      */
     public function pull(string $key)
     {
-        if ( isset($this->cache[$key] )) {
-            $result = $this->table->get($key);
-            unset($this->cache[$key]);
-            $this->table->del($key);
-            return $result;
+        $this->mutex->lock();
+        if ( $data = $this->get($key) ) {
+            $this->table->delete($key);
+            $this->mutex->unlock();
+            return $data;
         }
+        $this->mutex->unlock();
         return false;
     }
 
     /**
-     * Shift the first Node
-     *
-     * @return mixed
+     * @param string $key
+     * @return bool|mixed
      */
-    public function shift()
+    public function get(string $key )
     {
-        if (empty($this->cache)) {
-            return false;
-        }
-        $key = array_shift($this->cache);
-        $result = $this->table->get($key);
-        $this->table->del($key);
-        return $result;
+        return $this->table->get($key) ?? false;
     }
 
     /**
-     * Pop the last Node
-     *
-     * @return mixed
+     * @return bool|mixed
      */
-    public function pop()
+    public function shift()
     {
-        if (empty($this->cache)) {
+        $this->mutex->lock();
+        $this->table->next();
+        $data = $this->table->current();
+        $key = $this->table->key();
+        $this->mutex->unlock();
+        if ( $data === null ) {
             return false;
         }
-        $key = array_pop($this->cache);
-        $result = $this->table->get($key);
-        $this->table->del($key);
-        return $result;
+        $this->table->delete($key);
+        return $data;
     }
 
 }

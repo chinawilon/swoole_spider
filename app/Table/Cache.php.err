@@ -1,0 +1,124 @@
+<?php
+
+namespace App\Table;
+
+use Swoole\Table;
+
+class Cache implements CacheInterface
+{
+    /**
+     * @var Table
+     */
+    private $table;
+
+    /**
+     * @var array
+     */
+    private $cache = [];
+
+    /**
+     * @var int
+     */
+    private $size;
+
+    /**
+     * @var int
+     */
+    private $curr = 0;
+
+    /**
+     * Cache constructor.
+     *
+     * @param Table $table
+     * @param int|null $size
+     */
+    public function __construct(Table $table, ?int $size = null)
+    {
+        // todo(wilon)
+        // There's no way to calculate how much it can save
+        // Maybe half would be fine !
+        $this->size = $size ?? $table->getSize() / 2;
+        $this->table = $table;
+    }
+
+    /**
+     * Put the result
+     *
+     * @param string $key
+     * @param array $data
+     */
+    public function put(string $key, array $data): void
+    {
+        if (isset($this->cache[$key])) {
+            $this->table->del($key);
+        } else {
+            $this->cache[$key] = $key;
+            $this->curr++;
+            if ( $this->curr >= $this->size ) {
+                $this->removeOldest();
+            }
+        }
+        $this->table->set($key, $data);
+    }
+
+    /**
+     * Remove the oldest one
+     */
+    public function removeOldest()
+    {
+        if ( empty($this->cache) ) {
+            return false;
+        }
+        $key = array_shift($this->cache);
+        $result = $this->table->get($key);
+        $this->table->del($key);
+        $this->curr--;
+        return $result;
+    }
+
+    /**
+     * Pull the result and delete it
+     *
+     * @param string $key
+     * @return mixed|null
+     */
+    public function pull(string $key)
+    {
+        if ( isset($this->cache[$key] )) {
+            $result = $this->table->get($key);
+            unset($this->cache[$key]);
+            $this->table->del($key);
+            $this->curr--;
+            return $result;
+        }
+        return false;
+    }
+
+    /**
+     * Shift the first Node
+     *
+     * @return mixed
+     */
+    public function shift()
+    {
+        return $this->removeOldest();
+    }
+
+    /**
+     * Pop the last Node
+     *
+     * @return mixed
+     */
+    public function pop()
+    {
+        if (empty($this->cache)) {
+            return false;
+        }
+        $key = array_pop($this->cache);
+        $result = $this->table->get($key);
+        $this->table->del($key);
+        $this->curr--;
+        return $result;
+    }
+
+}
