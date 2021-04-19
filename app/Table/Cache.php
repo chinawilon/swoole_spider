@@ -45,16 +45,14 @@ class Cache implements CacheInterface
      */
     public function put(string $key, array $data): void
     {
-        @$this->table->set($key, $data);
-        echo 'put done'.PHP_EOL;
+        $this->table->set($key, $data);
         if (error_get_last()) {
             $this->errNum->add();
-
             // @fixme how to do? save it??
             // $this->pop();
             // $this->set($key, $data); // death loop?
             // $this->pop();
-            file_put_contents(ROOT_PATH . '/runtime/cache.error.log',
+            file_put_contents(RUNTIME_PATH . '/cache.error.log',
                 sprintf("[%s] %s => %s\n", date("Y-m-d H:i:s"), $key, serialize($data)),
                 FILE_APPEND,
             );
@@ -96,10 +94,14 @@ class Cache implements CacheInterface
         $this->table->next();
         $data = $this->table->current();
         $key = $this->table->key();
-        $this->mutex->unlock();
         if ( $data === null ) {
+            // When the loop return the null data,
+            // Rewind the loop pointer
+            $this->table->rewind();
+            $this->mutex->unlock();
             return false;
         }
+        $this->mutex->unlock();
         $this->table->delete($key);
         return $data;
     }

@@ -80,8 +80,8 @@ class SwooleServer extends ServerAbstract
     {
         $left = '';
         $type = '';
-        $typeLength = 3;
-        $dataLength = 2;
+        $typeLength = 4;
+        $dataLength = 4;
         return function (Server $server, $fd, $data) use(&$left, &$type, $typeLength, $dataLength) {
             $left .= $data;
             while (true) {
@@ -93,34 +93,29 @@ class SwooleServer extends ServerAbstract
                     $left = substr($left, $typeLength);
                 }
                 switch ($type) {
-                    case 'PUB':
+                    case 'PUB ':
                         if (strlen($left) < $dataLength) {
                             break 2;
                         }
-                        [, $length] = unpack('n', substr($left, 0, $dataLength));
+                        [, $length] = unpack('N', substr($left, 0, $dataLength));
                         $contentLength = $length + $dataLength;
-                        if ( strlen($left) >= $contentLength) {
+                        if (strlen($left) >= $contentLength) {
                             $data = substr($left, $dataLength, $length);
                             $request = json_decode($data, true, 512, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
                             $server->send($fd, $uid = $this->atomic->add()); // return the uid
                             $this->engine->submit(new Request($uid, $request));
-                            $left = substr($left,  $contentLength);
+                            $left = substr($left, $contentLength);
                         } else {
                             break 2;
                         }
                         break;
-                    case 'SUB':
+                    case 'SUB ':
                         while (true) {
                             if ( $result = $this->cache->shift() ) {
-                                echo $result;
-                                $send = json_encode($result, JSON_THROW_ON_ERROR);
-                                echo strlen($send).PHP_EOL;
-                                $server->send($fd, pack('n', strlen($send)).$send);
-                                usleep(1); // yield
-                            } else {
-                                $server->close($fd); // close the fd
-                                break 3;
+                                $msg = json_encode($result, JSON_THROW_ON_ERROR);
+                                $server->send($fd, pack('N', strlen($msg)) . $msg);
                             }
+                            usleep(1); // yield
                         }
                         break;
                 }

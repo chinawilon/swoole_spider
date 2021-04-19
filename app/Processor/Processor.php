@@ -28,7 +28,7 @@ class Processor implements ProcessorInterface
      */
     public function process(Request $request)
     {
-        $result = ['status_code' => 0];
+        $result = ['status_code' => 0, 'id'=>$request->getId()];
         $http = new Client($request->getHost(), $request->getPort());
         defer(static function () use($http) {
             $http->close();

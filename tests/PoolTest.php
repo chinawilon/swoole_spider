@@ -45,8 +45,30 @@ class PoolTest extends TestCase
                 }
 
         });
+        $pool->start();
 
     }
+
+    public function testCache2(): void
+    {
+        $table = new Table(4096, 0.25);
+        $table->column('id', Table::TYPE_INT);
+        $table->create();
+        $cache = new \App\Table\Cache($table);
+
+        $pool = new Pool(2);
+        $pool->on('WorkerStart', function () use($cache) {
+            $cache->put(random_int(0, 100), ['id'=>random_int(0, 100)]);
+            var_dump($cache->shift());
+//            while( $data = $cache->shift() ) {
+//                var_dump($data);
+//            }
+
+        });
+        $pool->start();
+
+    }
+
 
     public function testRun(): void
     {

@@ -49,7 +49,6 @@ class QueueScheduler implements SchedulerInterface
             for (;;) {
                 $worker = $this->workerChan->pop();
                 $request = $this->requestChan->pop();
-                echo 'push'.PHP_EOL;
                 $worker->push($request);
             }
             /*for (;;) {

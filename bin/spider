@@ -10,16 +10,16 @@ use App\Server\SwooleServer;
 use App\Table\Cache;
 use Swoole\Table;
 
-require __DIR__.'/bootstrap/app.php';
+require __DIR__ . '/../bootstrap/app.php';
 
 // Table store
-$table = new Table(1<<6);
+$table = new Table(1<<20);
 $table->column('id', Table::TYPE_INT);
 $table->column('status_code', Table::TYPE_INT);
 $table->column('response_body', Table::TYPE_STRING, 1024);
 $table->create();
 
-// Cache.err for manage the Table
+// Cache for manage the Table
 $cache = new Cache($table);
 
 // Spider engine
@@ -29,7 +29,7 @@ $engine = new ConcurrentEngine(
     100,
 );
 
-// tcp server
+// Pool server
 //$server = new PoolServer('0.0.0.0', 8080, new Protocol(), $engine);
 
 // swoole server
