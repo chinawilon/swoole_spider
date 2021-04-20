@@ -54,12 +54,19 @@ class Engine implements EngineInterface
     /**
      * Shutdown the Spider Engine.
      * Wait the all Coroutine end.
-     * Sync the Cache to the file.
      */
-    public function shutdown(): void
+    public function workerStop(): void
     {
         $this->requestChan->close();
         $this->wg->wait();
+    }
+
+    /**
+     * Manager stop event.
+     * Sync the Cache to the file.
+     */
+    public function managerStop(): void
+    {
         $this->cache->sync();
     }
 
@@ -68,9 +75,6 @@ class Engine implements EngineInterface
      */
     public function run(): void
     {
-        // Load the metadata file
-        $this->cache->load();
-
         // Spider main logic
         go(function(){
             for (;;) {

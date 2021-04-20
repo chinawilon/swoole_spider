@@ -10,7 +10,7 @@ use Swoole\Table;
 require __DIR__ . '/../bootstrap/app.php';
 
 // Table store
-$table = new Table(1<<20);
+$table = new Table(1<<20); // Memory
 $table->column('id', Table::TYPE_INT);
 $table->column('status_code', Table::TYPE_INT);
 $table->column('response_body', Table::TYPE_STRING, 1024);

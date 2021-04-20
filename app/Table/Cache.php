@@ -3,6 +3,7 @@
 
 namespace App\Table;
 
+
 use Swoole\Lock;
 use Swoole\Table;
 
@@ -18,6 +19,10 @@ class Cache implements CacheInterface
      * @var Lock
      */
     private $mutex;
+    /**
+     * @var string
+     */
+    private $metadata = RUNTIME_PATH.'/metadata.dat';
 
     /**
      * Cache constructor.
@@ -28,6 +33,7 @@ class Cache implements CacheInterface
     {
         $this->table = $table;
         $this->mutex = new Lock();
+        $this->load(); // load the metadata
     }
 
     /**
@@ -69,9 +75,11 @@ class Cache implements CacheInterface
      */
     public function sync(): void
     {
-        //@todo(wilon)
-        $this->mutex->lock();
-        $this->mutex->unlock();
+        $meta = [];
+        foreach( $this->table as $row ) {
+            $meta[$row['id']] = $row;
+        }
+        file_put_contents($this->metadata, serialize($meta));
     }
 
     /**
@@ -79,9 +87,14 @@ class Cache implements CacheInterface
      */
     public function load(): void
     {
-        //@todo(wilon)
-        $this->mutex->lock();
-        $this->mutex->unlock();
+        $meta = file_get_contents($this->metadata);
+        if ( $meta === '' ) {
+            return;
+        }
+        $data = unserialize($meta, ['allowed_classes'=>true]);
+        foreach($data as $row) {
+            $this->table->set($row['id'], $row);
+        }
     }
 
     /**

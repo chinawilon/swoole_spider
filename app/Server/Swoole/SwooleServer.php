@@ -19,20 +19,32 @@ class SwooleServer extends ServerAbstract
     public function bootstrap(): void
     {
         $this->server = new Server($this->host, $this->port, SWOOLE_PROCESS, SWOOLE_SOCK_TCP);
-        $this->server->set(['task_enable_coroutine' => true]);
-        $this->server->set(['hook_flags' => SWOOLE_HOOK_ALL]);
+        $this->server->set([
+            'task_enable_coroutine' => true,
+            'reload_async' => true,
+            'hook_flags' => SWOOLE_HOOK_ALL
+        ]);
         $this->server->on('WorkerStart', [$this, 'handle']);
-        $this->server->on('WorkerStop', [$this, 'shutdown']);
+        $this->server->on('WorkerStop', [$this, 'workerStop']);
+        $this->server->on('ManagerStop', [$this, 'managerStop']);
         // Socket handle
         $this->socketHandle();
     }
 
     /**
+     * Manager stop event
+     */
+    public function managerStop(): void
+    {
+        $this->engine->managerStop();
+    }
+
+    /**
      * Shutdown the Server
      */
-    public function shutdown(): void
+    public function workerStop(): void
     {
-        $this->engine->shutdown();
+        $this->engine->workerStop();
     }
 
     /**
