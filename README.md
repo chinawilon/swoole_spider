@@ -21,14 +21,14 @@ $cache = new Cache($table); // manage the table
 PoolServer
 ```php
 use App\Server\PoolServer;
-$server = new PoolServer('0.0.0.0', 8080, new Protocol(), $engine); 
+$server = new PoolServer('0.0.0.0', 8080, $engine); 
 $server->start();
 ```
 
 SwooleServer
 ```php
-use App\Server\SwooleServer;
-$server = new SwooleServer('0.0.0.0', 8080, new Protocol(), $engine, $cache);
+use App\Server\Swoole\SwooleServer;
+$server = new SwooleServer('0.0.0.0', 8080,  $engine);
 $server->start();
 ```
 
