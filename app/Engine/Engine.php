@@ -62,10 +62,10 @@ class Engine implements EngineInterface
     }
 
     /**
-     * Manager stop event.
+     * Shutdown event.
      * Sync the Cache to the file.
      */
-    public function managerStop(): void
+    public function shutdown(): void
     {
         $this->cache->sync();
     }

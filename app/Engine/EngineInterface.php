@@ -14,5 +14,5 @@ interface EngineInterface
     public function pullResult(string $key);
     public function putResult(string $key, array $data);
     public function workerStop(): void ;
-    public function managerStop(): void ;
+    public function shutdown(): void ;
 }

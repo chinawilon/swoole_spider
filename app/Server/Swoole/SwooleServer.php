@@ -4,6 +4,7 @@
 namespace App\Server\Swoole;
 
 use App\Server\ServerAbstract;
+use Swoole\Process;
 use Swoole\Server;
 
 class SwooleServer extends ServerAbstract
@@ -25,26 +26,27 @@ class SwooleServer extends ServerAbstract
             'hook_flags' => SWOOLE_HOOK_ALL
         ]);
         $this->server->on('WorkerStart', [$this, 'handle']);
-        $this->server->on('WorkerStop', [$this, 'workerStop']);
-        $this->server->on('ManagerStop', [$this, 'managerStop']);
+        $this->server->on('WorkerExit', [$this, 'workerExit']);
+        $this->server->on('Shutdown', [$this, 'shutdown']);
         // Socket handle
         $this->socketHandle();
     }
 
     /**
-     * Manager stop event
+     * Worker exit event
      */
-    public function managerStop(): void
+    public function workerExit(): void
     {
-        $this->engine->managerStop();
+        echo 'workerExit';
+        $this->engine->workerStop();
     }
 
     /**
-     * Shutdown the Server
+     * Shutdown stop event
      */
-    public function workerStop(): void
+    public function shutdown(): void
     {
-        $this->engine->workerStop();
+        $this->engine->shutdown();
     }
 
     /**

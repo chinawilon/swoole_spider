@@ -44,7 +44,7 @@ class PoolServer extends ServerAbstract
         $server = new Server($this->host, $this->port, false, true);
         Process::signal(SIGTERM, function () use($server)  {
             $server->shutdown();
-            $this->engine->shutdown();
+            $this->engine->workerStop();
         });
 
         // some protocol the handle the connection
