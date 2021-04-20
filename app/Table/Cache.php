@@ -70,6 +70,8 @@ class Cache implements CacheInterface
     public function sync(): void
     {
         //@todo(wilon)
+        $this->mutex->lock();
+        $this->mutex->unlock();
     }
 
     /**
@@ -78,6 +80,8 @@ class Cache implements CacheInterface
     public function load(): void
     {
         //@todo(wilon)
+        $this->mutex->lock();
+        $this->mutex->unlock();
     }
 
     /**

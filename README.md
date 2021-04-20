@@ -1,7 +1,7 @@
 # swoole_spider
 
 ```shell script
-php spider // Just do it !!
+php bin/spider // Just do it !!
 ```
 
 ## Cache
