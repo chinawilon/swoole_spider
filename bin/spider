@@ -1,9 +1,7 @@
 #!/usr/bin/env php
 <?php
 
-use App\Engine\ConcurrentEngine;
-use App\Processor\Processor;
-use App\Scheduler\QueueScheduler;
+use App\Engine\Engine;
 use App\Server\Pool\PoolServer;
 use App\Server\Swoole\SwooleServer;
 use App\Table\Cache;
@@ -22,15 +20,11 @@ $table->create();
 $cache = new Cache($table);
 
 // Spider engine
-$engine = new ConcurrentEngine(
-    new QueueScheduler(),
-    new Processor($cache),
-    100,
-);
+$engine = new Engine($cache, 1000);
 
 // Pool server
-$server = new PoolServer('0.0.0.0', 8080, $engine, $cache);
+// $server = new PoolServer('0.0.0.0', 8080, $engine);
 
 // swoole server
-// $server = new SwooleServer('0.0.0.0', 8080, $engine, $cache);
+$server = new SwooleServer('0.0.0.0', 8080, $engine);
 $server->start();

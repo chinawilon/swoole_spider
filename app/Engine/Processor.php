@@ -1,27 +1,16 @@
 <?php
 
 
-namespace App\Processor;
+namespace App\Engine;
 
 
 use App\Server\Request;
-use App\Table\CacheInterface;
 use Swoole\Coroutine\Http\Client;
 use Throwable;
 
 
-class Processor implements ProcessorInterface
+class Processor
 {
-    /**
-     * @var CacheInterface
-     */
-    private $cache;
-
-    public function __construct(CacheInterface $cache)
-    {
-        $this->cache = $cache;
-    }
-
     /**
      * @param Request $request
      * @return mixed|string
@@ -46,6 +35,7 @@ class Processor implements ProcessorInterface
         } catch (Throwable $e) {
             $result['response_body'] = $e->getMessage();
         }
-        $this->cache->put($request->getId(), $result);
+        // [key, data]
+        return [$request->getId(), $result];
     }
 }

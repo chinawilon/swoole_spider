@@ -24,7 +24,7 @@ class PoolServer extends ServerAbstract
 
     public function bootstrap(): void
     {
-        $this->protocol = new ProtocolPool($this->cache, $this->engine);
+        $this->protocol = new ProtocolPool($this->engine);
         $this->pool = new Pool($this->workerNum ?? swoole_cpu_num());
         $this->pool->set(['enable_coroutine' => true]);
         $this->pool->on('workerStart', [$this, 'handle']);

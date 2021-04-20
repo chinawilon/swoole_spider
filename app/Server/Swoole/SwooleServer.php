@@ -22,8 +22,17 @@ class SwooleServer extends ServerAbstract
         $this->server->set(['task_enable_coroutine' => true]);
         $this->server->set(['hook_flags' => SWOOLE_HOOK_ALL]);
         $this->server->on('WorkerStart', [$this, 'handle']);
+        $this->server->on('WorkerStop', [$this, 'shutdown']);
         // Socket handle
         $this->socketHandle();
+    }
+
+    /**
+     * Shutdown the Server
+     */
+    public function shutdown(): void
+    {
+        $this->engine->shutdown();
     }
 
     /**
@@ -42,7 +51,7 @@ class SwooleServer extends ServerAbstract
         // Socket Connect
         $onReceives = array();
         $this->server->on('connect', function ($server, $fd, $rid) use(&$onReceives){
-            $onReceives[$fd] = new ProtocolSwoole($this->cache, $this->engine);
+            $onReceives[$fd] = new ProtocolSwoole($this->engine);
         });
 
         // Socket Close

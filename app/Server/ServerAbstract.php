@@ -36,15 +36,13 @@ abstract class ServerAbstract
      * @param string $host
      * @param int $port
      * @param EngineInterface $engine
-     * @param CacheInterface $cache
      * @param null $workerNum
      */
-    public function __construct(string $host, int $port, EngineInterface $engine, CacheInterface $cache, $workerNum = null )
+    public function __construct(string $host, int $port, EngineInterface $engine, $workerNum = null )
     {
         $this->host = $host;
         $this->port = $port;
         $this->engine = $engine;
-        $this->cache = $cache;
         $this->workerNum = $workerNum;
         $this->bootstrap();
     }

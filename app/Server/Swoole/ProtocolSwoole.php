@@ -93,10 +93,10 @@ class ProtocolSwoole extends ProtocolAbstract
             if (! $server->exist($fd) ) {
                 break;
             }
-            if ( $result = $this->cache->shift() ) {
+            if ( $result = $this->engine->pullOneResult() ) {
                 $msg = json_encode($result, JSON_THROW_ON_ERROR);
                 if (! $server->send($fd, pack('N', strlen($msg)) . $msg) ) {
-                    $this->cache->put($result['id'], $result); // save it back !!
+                    $this->engine->putResult($result['id'], $result); // save it back !!
                     break;
                 }
             }

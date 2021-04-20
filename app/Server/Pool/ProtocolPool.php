@@ -3,7 +3,6 @@
 
 namespace App\Server\Pool;
 
-use App\Engine\EngineInterface;
 use App\Server\ProtocolAbstract;
 use App\Server\Request;
 use Co\Server\Connection;
@@ -68,7 +67,7 @@ class ProtocolPool extends ProtocolAbstract
             if (! $reader->isLive() ) {
                 break;
             }
-            if ( $result = $this->cache->shift() ) {
+            if ( $result = $this->engine->pullOneResult() ) {
                 $msg = json_encode($result, JSON_THROW_ON_ERROR);
                 $writer->write(pack('N', strlen($msg)).$msg);
                 $writer->flush();

@@ -3,7 +3,6 @@
 
 namespace App\Table;
 
-use Swoole\Atomic;
 use Swoole\Lock;
 use Swoole\Table;
 
@@ -19,24 +18,16 @@ class Cache implements CacheInterface
      * @var Lock
      */
     private $mutex;
-    /**
-     * @var Atomic
-     */
-    private $errNum;
 
+    /**
+     * Cache constructor.
+     *
+     * @param Table $table
+     */
     public function __construct(Table $table)
     {
         $this->table = $table;
         $this->mutex = new Lock();
-        $this->errNum = new Atomic();
-    }
-
-    /**
-     * @return mixed
-     */
-    public function getErrNum(): int
-    {
-        return $this->errNum->get();
     }
 
     /**
@@ -46,18 +37,6 @@ class Cache implements CacheInterface
     public function put(string $key, array $data): void
     {
         $this->table->set($key, $data);
-        if (error_get_last()) {
-            $this->errNum->add();
-            // @fixme how to do? save it??
-            // $this->pop();
-            // $this->set($key, $data); // death loop?
-            // $this->pop();
-            file_put_contents(RUNTIME_PATH . '/cache.error.log',
-                sprintf("[%s] %s => %s\n", date("Y-m-d H:i:s"), $key, serialize($data)),
-                FILE_APPEND,
-            );
-
-        }
     }
 
     /**
@@ -83,6 +62,14 @@ class Cache implements CacheInterface
     public function get(string $key )
     {
         return $this->table->get($key) ?? false;
+    }
+
+    /**
+     * Sync the data to metadata file
+     */
+    public function sync(): void
+    {
+        //@todo(wilon)
     }
 
     /**

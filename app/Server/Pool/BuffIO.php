@@ -4,6 +4,7 @@
 namespace App\Server\Pool;
 
 use Co\Server\Connection;
+use Swoole\Coroutine\Socket;
 
 class BuffIO
 {
@@ -16,11 +17,16 @@ class BuffIO
      * @var Connection
      */
     private $conn;
+    /**
+     * @var Socket
+     */
+    private $socket;
 
 
     public function __construct(Connection $conn)
     {
         $this->conn = $conn;
+        $this->socket = $this->conn->exportSocket();
     }
 
     /**
@@ -28,8 +34,7 @@ class BuffIO
      */
     public function isLive(): bool
     {
-        $socket = $this->conn->exportSocket();
-        return $socket->checkLiveness();
+        return $this->socket->checkLiveness();
     }
 
     /**
@@ -47,7 +52,9 @@ class BuffIO
     {
         $msg = $this->left;
         $this->left = '';
-        $this->conn->send($msg);
+        if ( $this->socket->checkLiveness() ) {
+            $this->conn->send($msg);
+        }
     }
 
     /**
