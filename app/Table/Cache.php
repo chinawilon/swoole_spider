@@ -65,9 +65,17 @@ class Cache implements CacheInterface
     }
 
     /**
-     * Sync the data to metadata file
+     * Sync the Cache to metadata file
      */
     public function sync(): void
+    {
+        //@todo(wilon)
+    }
+
+    /**
+     * Load the metadata file to Cache
+     */
+    public function load(): void
     {
         //@todo(wilon)
     }

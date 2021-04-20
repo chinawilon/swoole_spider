@@ -16,7 +16,6 @@ class Engine implements EngineInterface
      * @var Processor
      */
     private $processor;
-
     /**
      * @var CacheInterface
      */
@@ -29,10 +28,6 @@ class Engine implements EngineInterface
      * @var Channel
      */
     private $requestChan;
-    /**
-     * @var int
-     */
-    private $workerNum;
 
     /**
      * ConcurrentEngine constructor.
@@ -73,6 +68,10 @@ class Engine implements EngineInterface
      */
     public function run(): void
     {
+        // Load the metadata file
+        $this->cache->load();
+
+        // Spider main logic
         go(function(){
             for (;;) {
                 if (! $request = $this->requestChan->pop() ) {

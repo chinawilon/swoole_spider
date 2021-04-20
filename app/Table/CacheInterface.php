@@ -11,4 +11,5 @@ interface CacheInterface
     public function pull(string $key) ;
     public function shift();
     public function sync();
+    public function load();
 }
