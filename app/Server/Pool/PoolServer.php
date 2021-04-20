@@ -1,8 +1,9 @@
 <?php
 
 
-namespace App\Server;
+namespace App\Server\Pool;
 
+use App\Server\ServerAbstract;
 use Co\Server\Connection;
 use Swoole\Coroutine\Server;
 use Swoole\Exception;
@@ -16,8 +17,14 @@ class PoolServer extends ServerAbstract
      */
     private $pool;
 
+    /**
+     * @var ProtocolPool
+     */
+    private $protocol;
+
     public function bootstrap(): void
     {
+        $this->protocol = new ProtocolPool($this->cache, $this->engine);
         $this->pool = new Pool($this->workerNum ?? swoole_cpu_num());
         $this->pool->set(['enable_coroutine' => true]);
         $this->pool->on('workerStart', [$this, 'handle']);
@@ -42,9 +49,7 @@ class PoolServer extends ServerAbstract
 
         // some protocol the handle the connection
         $server->handle(function (Connection $conn) {
-            $this->protocol->handle(
-                new ConnectionFd($conn), $this->engine
-            );
+            $this->protocol->handle($conn);
         });
         $server->start();
     }

@@ -18,10 +18,6 @@ abstract class ServerAbstract
      */
     protected $port;
     /**
-     * @var ProtocolInterface
-     */
-    protected $protocol;
-    /**
      * @var EngineInterface
      */
     protected $engine;
@@ -39,16 +35,14 @@ abstract class ServerAbstract
      *
      * @param string $host
      * @param int $port
-     * @param ProtocolInterface $protocol
      * @param EngineInterface $engine
      * @param CacheInterface $cache
      * @param null $workerNum
      */
-    public function __construct(string $host, int $port, ProtocolInterface $protocol, EngineInterface $engine, CacheInterface $cache, $workerNum = null )
+    public function __construct(string $host, int $port, EngineInterface $engine, CacheInterface $cache, $workerNum = null )
     {
         $this->host = $host;
         $this->port = $port;
-        $this->protocol = $protocol;
         $this->engine = $engine;
         $this->cache = $cache;
         $this->workerNum = $workerNum;
