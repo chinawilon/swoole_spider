@@ -82,7 +82,7 @@ class Engine implements EngineInterface
         // Spider main logic
         go(function(){
             while ($this->isRunning) {
-                if ( $data = $this->requestCache->shift() ) {
+                if ( $data = $this->pullOneResult() ) {
                     $this->wg->add();
                     go(function() use($data){
                         defer(function(){

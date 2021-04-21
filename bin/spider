@@ -2,6 +2,7 @@
 <?php
 
 use App\Engine\Engine;
+use App\Server\Pool\PoolServer;
 use App\Server\Swoole\SwooleServer;
 use App\Table\RequestCache;
 use App\Table\ResponseCache;
@@ -12,8 +13,8 @@ require __DIR__ . '/../bootstrap/app.php';
 $engine = new Engine(new ResponseCache(1<<20), new RequestCache(1<<20));
 
 // Pool server
-// $server = new PoolServer('0.0.0.0', 8080, $engine);
+$server = new PoolServer('0.0.0.0', 8080, $engine);
 
 // swoole server
-$server = new SwooleServer('0.0.0.0', 8080, $engine);
+// $server = new SwooleServer('0.0.0.0', 8080, $engine);
 $server->start();

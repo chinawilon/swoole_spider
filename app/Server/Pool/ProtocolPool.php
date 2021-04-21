@@ -4,7 +4,6 @@
 namespace App\Server\Pool;
 
 use App\Server\ProtocolAbstract;
-use App\Server\Request;
 use Co\Server\Connection;
 use JsonException;
 use Swoole\Coroutine;
@@ -37,7 +36,6 @@ class ProtocolPool extends ProtocolAbstract
     /**
      * @param BuffIO $reader
      * @param BuffIO $writer
-     * @throws JsonException
      */
     public function publish(BuffIO $reader, BuffIO $writer): void
     {
@@ -49,10 +47,9 @@ class ProtocolPool extends ProtocolAbstract
             if (! $data = $reader->read($length) ) {
                 break;
             }
-            $request = json_decode($data, true, 512, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
             $writer->write($uid = $this->atomic->add());
             $writer->flush();
-            $this->engine->submit(new Request($uid, $request));
+            $this->engine->submit($uid, $data);
         }
     }
 
