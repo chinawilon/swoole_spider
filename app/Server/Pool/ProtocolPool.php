@@ -7,6 +7,7 @@ use App\Server\ProtocolAbstract;
 use App\Server\Request;
 use Co\Server\Connection;
 use JsonException;
+use Swoole\Coroutine;
 
 class ProtocolPool extends ProtocolAbstract
 {
@@ -71,6 +72,9 @@ class ProtocolPool extends ProtocolAbstract
                 $msg = json_encode($result, JSON_THROW_ON_ERROR);
                 $writer->write(pack('N', strlen($msg)).$msg);
                 $writer->flush();
+            } else {
+                // @fixme(wilon) If no result to send, just sleep(1) to yield
+                Coroutine::sleep(1);
             }
         }
     }
