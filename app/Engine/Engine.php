@@ -5,8 +5,9 @@ namespace App\Engine;
 
 
 use App\Server\Request;
-use App\Table\CacheInterface;
-use Swoole\Coroutine\Channel;
+use App\Table\RequestCache;
+use App\Table\ResponseCache;
+use Swoole\Coroutine;
 use Swoole\Coroutine\WaitGroup;
 
 
@@ -17,38 +18,40 @@ class Engine implements EngineInterface
      */
     private $processor;
     /**
-     * @var CacheInterface
-     */
-    private $cache;
-    /**
      * @var WaitGroup
      */
     private $wg;
     /**
-     * @var Channel
+     * @var ResponseCache
      */
-    private $requestChan;
+    private $responseCache;
+    /**
+     * @var RequestCache
+     */
+    private $requestCache;
 
     /**
-     * ConcurrentEngine constructor.
-     *
-     * @param CacheInterface $cache
-     * @param int $workerNum
+     * @var bool
      */
-    public function __construct(CacheInterface $cache, int $workerNum)
+    private $isRunning = true;
+
+
+    public function __construct(ResponseCache $responseCache, RequestCache $requestCache)
     {
-        $this->cache = $cache;
+        $this->responseCache = $responseCache;
+        $this->requestCache =  $requestCache;
         $this->wg = new WaitGroup();
         $this->processor = new Processor();
-        $this->requestChan = new Channel($workerNum);
     }
 
     /**
-     * @param Request $request
+     * @param string $key
+     * @param string $request
      */
-    public function submit(Request $request): void
+    public function submit(string $key, string $request): void
     {
-        $this->requestChan->push($request);
+        $data = ['data' => $request, 'id' => $key];
+        $this->requestCache->put($key, $data);
     }
 
     /**
@@ -57,17 +60,18 @@ class Engine implements EngineInterface
      */
     public function workerStop(): void
     {
-        $this->requestChan->close();
+        $this->isRunning = false;
         $this->wg->wait();
     }
 
     /**
      * Shutdown event.
-     * Sync the Cache to the file.
+     * Sync the CacheAbstract to the file.
      */
     public function shutdown(): void
     {
-        $this->cache->sync();
+        $this->responseCache->sync();
+        $this->requestCache->sync();
     }
 
     /**
@@ -77,18 +81,23 @@ class Engine implements EngineInterface
     {
         // Spider main logic
         go(function(){
-            for (;;) {
-                if (! $request = $this->requestChan->pop() ) {
-                    break; // close
-                }
-                $this->wg->add();
-                go(function() use($request){
-                    defer(function(){
-                        $this->wg->done();
+            while ($this->isRunning) {
+                if ( $data = $this->requestCache->shift() ) {
+                    $this->wg->add();
+                    go(function() use($data){
+                        defer(function(){
+                            $this->wg->done();
+                        });
+                        $request = json_decode($data['data'], true, 512, JSON_THROW_ON_ERROR);
+                        [$id, $data] = $this->processor->process(
+                            new Request($data['id'], $request)
+                        );
+                        $this->responseCache->put($id, $data);
                     });
-                    [$id, $data] = $this->processor->process($request);
-                    $this->cache->put($id, $data);
-                });
+                } else {
+                    // @fixme(wilon) If there is no request, just sleep(1) for yield
+                    Coroutine::sleep(1);
+                }
             }
         });
     }
@@ -98,7 +107,7 @@ class Engine implements EngineInterface
      */
     public function pullOneResult()
     {
-        return $this->cache->shift();
+        return $this->responseCache->shift();
     }
 
     /**
@@ -107,7 +116,7 @@ class Engine implements EngineInterface
      */
     public function putResult(string $key, array $data): void
     {
-        $this->cache->put($key, $data);
+        $this->responseCache->put($key, $data);
     }
 
     /**
@@ -116,6 +125,6 @@ class Engine implements EngineInterface
      */
     public function pullResult(string $key)
     {
-        return $this->cache->pull($key);
+        return $this->responseCache->pull($key);
     }
 }

@@ -54,7 +54,7 @@ class PoolTest extends TestCase
         $table = new Table(4096, 0.25);
         $table->column('id', Table::TYPE_INT);
         $table->create();
-        $cache = new \App\Table\Cache($table);
+        $cache = new \App\Table\CacheAbstract($table);
 
         $pool = new Pool(2);
         $pool->on('WorkerStart', function () use($cache) {

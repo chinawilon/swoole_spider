@@ -7,6 +7,7 @@ namespace App\Server\Swoole;
 use App\Server\ProtocolAbstract;
 use App\Server\Request;
 use JsonException;
+use Swoole\Coroutine;
 use Swoole\Server;
 
 class ProtocolSwoole extends ProtocolAbstract
@@ -58,9 +59,8 @@ class ProtocolSwoole extends ProtocolAbstract
     }
 
     /**
-     * @param $server
+     * @param Server $server
      * @param $fd
-     * @throws JsonException
      */
     public function publish(Server $server, $fd): void
     {
@@ -70,12 +70,11 @@ class ProtocolSwoole extends ProtocolAbstract
         [, $length] = unpack('N', substr($this->left, 0, self::DATA_LENGTH));
         $contentLength = $length + self::DATA_LENGTH;
         if ( $this->getLeftLen() >= $contentLength) {
-            $data = substr($this->left, self::DATA_LENGTH, $length);
-            $request = json_decode($data, true, 512, JSON_THROW_ON_ERROR | JSON_UNESCAPED_UNICODE);
+            $request = substr($this->left, self::DATA_LENGTH, $length);
             go(function() use($server, $fd, $request) {
                 if ($server->send($fd, $uid = $this->atomic->add()) ) {
                     // If not send success. drop it??
-                    $this->engine->submit(new Request($uid, $request));
+                    $this->engine->submit($uid, $request);
                 }
             });
             $this->left = substr($this->left, $contentLength);
@@ -99,6 +98,9 @@ class ProtocolSwoole extends ProtocolAbstract
                     $this->engine->putResult($result['id'], $result); // save it back !!
                     break;
                 }
+            } else {
+                // @fixme(wilon) If no result to send, just sleep(1) to yield
+                Coroutine::sleep(1);
             }
         }
     }

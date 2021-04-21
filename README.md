@@ -7,13 +7,13 @@ php bin/spider // Just do it !!
 ## Cache
 ```php
 use Swoole\Table;
-use App\Table\Cache;
+use App\Table\CacheAbstract;
 
 $table = new Table(1<<20); // capacity size
 $table->column('id', Table::TYPE_INT);
 $table->create();
 
-$cache = new Cache($table); // manage the table
+$cache = new CacheAbstract($table); // manage the table
 ```
 
 ## Server

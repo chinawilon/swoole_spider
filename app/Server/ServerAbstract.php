@@ -43,7 +43,7 @@ abstract class ServerAbstract
         $this->host = $host;
         $this->port = $port;
         $this->engine = $engine;
-        $this->workerNum = $workerNum;
+        $this->workerNum = $workerNum ?? swoole_cpu_num();
         $this->bootstrap();
     }
 

@@ -25,7 +25,7 @@ class PoolServer extends ServerAbstract
     public function bootstrap(): void
     {
         $this->protocol = new ProtocolPool($this->engine);
-        $this->pool = new Pool($this->workerNum ?? swoole_cpu_num());
+        $this->pool = new Pool($this->workerNum);
         $this->pool->set(['enable_coroutine' => true]);
         $this->pool->on('workerStart', [$this, 'handle']);
     }
@@ -40,7 +40,7 @@ class PoolServer extends ServerAbstract
         // Start the spider engine
         $this->engine->run();
 
-        // Request server
+        // RequestCache server
         $server = new Server($this->host, $this->port, false, true);
         Process::signal(SIGTERM, function () use($server)  {
             $server->shutdown();

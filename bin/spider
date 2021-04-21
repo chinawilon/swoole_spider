@@ -2,25 +2,14 @@
 <?php
 
 use App\Engine\Engine;
-use App\Server\Pool\PoolServer;
 use App\Server\Swoole\SwooleServer;
-use App\Table\Cache;
-use Swoole\Table;
+use App\Table\RequestCache;
+use App\Table\ResponseCache;
 
 require __DIR__ . '/../bootstrap/app.php';
 
-// Table store
-$table = new Table(1<<20); // Memory
-$table->column('id', Table::TYPE_INT);
-$table->column('status_code', Table::TYPE_INT);
-$table->column('response_body', Table::TYPE_STRING, 1024);
-$table->create();
-
-// Cache for manage the Table
-$cache = new Cache($table);
-
 // Spider engine
-$engine = new Engine($cache, 1000);
+$engine = new Engine(new ResponseCache(1<<20), new RequestCache(1<<20));
 
 // Pool server
 // $server = new PoolServer('0.0.0.0', 8080, $engine);

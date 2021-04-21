@@ -4,7 +4,6 @@
 namespace App\Server\Swoole;
 
 use App\Server\ServerAbstract;
-use Swoole\Process;
 use Swoole\Server;
 
 class SwooleServer extends ServerAbstract
@@ -23,10 +22,12 @@ class SwooleServer extends ServerAbstract
         $this->server->set([
             'task_enable_coroutine' => true,
             'reload_async' => true,
-            'hook_flags' => SWOOLE_HOOK_ALL
+            'hook_flags' => SWOOLE_HOOK_ALL,
+            'worker_num' => $this->workerNum,
         ]);
         $this->server->on('WorkerStart', [$this, 'handle']);
         $this->server->on('WorkerExit', [$this, 'workerExit']);
+        // $this->server->on('WorkerStop', [$this, 'workerStop']);
         $this->server->on('Shutdown', [$this, 'shutdown']);
         // Socket handle
         $this->socketHandle();

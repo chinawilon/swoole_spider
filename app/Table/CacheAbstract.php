@@ -7,34 +7,41 @@ namespace App\Table;
 use Swoole\Lock;
 use Swoole\Table;
 
-class Cache implements CacheInterface
+abstract class CacheAbstract implements CacheInterface
 {
 
     /**
      * @var Table
      */
-    private $table;
+    protected $table;
 
     /**
      * @var Lock
      */
-    private $mutex;
-    /**
-     * @var string
-     */
-    private $metadata = RUNTIME_PATH.'/metadata.dat';
+    protected $mutex;
 
     /**
-     * Cache constructor.
+     * CacheAbstract constructor.
      *
-     * @param Table $table
+     * @param $size
      */
-    public function __construct(Table $table)
+    public function __construct($size)
     {
-        $this->table = $table;
+        $this->table = $this->getTable($size);
         $this->mutex = new Lock();
         $this->load(); // load the metadata
     }
+
+    /**
+     * @param int $size
+     * @return Table
+     */
+    abstract public function getTable(int $size): Table ;
+
+    /**
+     * @return string
+     */
+    abstract public function getMetaFile(): string ;
 
     /**
      * @param string $key
@@ -71,33 +78,6 @@ class Cache implements CacheInterface
     }
 
     /**
-     * Sync the Cache to metadata file
-     */
-    public function sync(): void
-    {
-        $meta = [];
-        foreach( $this->table as $row ) {
-            $meta[$row['id']] = $row;
-        }
-        file_put_contents($this->metadata, serialize($meta));
-    }
-
-    /**
-     * Load the metadata file to Cache
-     */
-    public function load(): void
-    {
-        $meta = file_get_contents($this->metadata);
-        if ( $meta === '' ) {
-            return;
-        }
-        $data = unserialize($meta, ['allowed_classes'=>true]);
-        foreach($data as $row) {
-            $this->table->set($row['id'], $row);
-        }
-    }
-
-    /**
      * @return bool|mixed
      */
     public function shift()
@@ -118,4 +98,36 @@ class Cache implements CacheInterface
         return $data;
     }
 
+    /**
+     * Sync the CacheAbstract to metadata file
+     */
+    public function sync(): void
+    {
+        $meta = [];
+        foreach( $this->table as $row ) {
+            $meta[$row['id']] = $row;
+        }
+        file_put_contents($this->getMetaFile(), serialize($meta));
+    }
+
+    /**
+     * Load the metadata file to CacheAbstract
+     */
+    public function load(): void
+    {
+        if (! file_exists($this->getMetaFile()) ) {
+            // try to create it
+            file_put_contents($this->getMetaFile(), '');
+            return ;
+        }
+
+        $meta = file_get_contents($this->getMetaFile());
+        if ( $meta === '' ) {
+            return;
+        }
+        $data = unserialize($meta, ['allowed_classes'=>true]);
+        foreach($data as $row) {
+            $this->table->set($row['id'], $row);
+        }
+    }
 }

@@ -1,7 +1,7 @@
 <?php
 
 
-use App\Table\Cache;
+use App\Table\CacheAbstract;
 use PHPUnit\Framework\TestCase;
 use Swoole\Table;
 
@@ -29,7 +29,7 @@ class CacheTest extends TestCase
         $table->column('id', Table::TYPE_INT);
         $table->create();
 
-        $cache = new Cache($table);
+        $cache = new CacheAbstract($table);
         for($i=0;$i<1000;$i++) {
             $cache->put($i,['id'=>$i]);
         }
