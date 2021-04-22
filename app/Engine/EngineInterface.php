@@ -13,6 +13,6 @@ interface EngineInterface
     public function pullOneResult();
     public function pullResult(string $key);
     public function putResult(string $key, array $data);
-    public function workerStop(): void ;
+    public function workerExit(): void ;
     public function shutdown(): void ;
 }

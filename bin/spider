@@ -23,8 +23,8 @@ $cache = new Cache($table);
 $engine = new Engine($cache, 1000);
 
 // Pool server
-// $server = new PoolServer('0.0.0.0', 8080, $engine);
+$server = new PoolServer('0.0.0.0', 8080, $engine);
 
 // swoole server
-$server = new SwooleServer('0.0.0.0', 8080, $engine);
+// $server = new SwooleServer('0.0.0.0', 8080, $engine);
 $server->start();

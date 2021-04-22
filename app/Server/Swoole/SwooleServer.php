@@ -37,7 +37,7 @@ class SwooleServer extends ServerAbstract
      */
     public function workerExit(): void
     {
-        $this->engine->workerStop();
+        $this->engine->workerExit();
     }
 
     /**

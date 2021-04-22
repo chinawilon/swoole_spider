@@ -6,6 +6,7 @@ namespace App\Engine;
 
 use App\Server\Request;
 use App\Table\CacheInterface;
+use Swoole\Coroutine;
 use Swoole\Coroutine\Channel;
 use Swoole\Coroutine\WaitGroup;
 
@@ -28,7 +29,10 @@ class Engine implements EngineInterface
      * @var Channel
      */
     private $requestChan;
-
+    /**
+     * @var bool
+     */
+    private $isRunning = true;
     /**
      * ConcurrentEngine constructor.
      *
@@ -55,8 +59,9 @@ class Engine implements EngineInterface
      * Shutdown the Spider Engine.
      * Wait the all Coroutine end.
      */
-    public function workerStop(): void
+    public function workerExit(): void
     {
+        $this->isRunning = false;
         $this->requestChan->close();
         $this->wg->wait();
     }
@@ -77,8 +82,14 @@ class Engine implements EngineInterface
     {
         // Spider main logic
         go(function(){
-            for (;;) {
+            while ($this->isRunning) {
+//                if ( $this->requestChan->isEmpty() ) {
+//                    // @todo(wilon) If there is no request, Just Sleep(1) to yield
+//                    Coroutine::sleep(1);
+//                    continue;
+//                }
                 if (! $request = $this->requestChan->pop() ) {
+                    echo 'Close'.PHP_EOL;
                     break; // close
                 }
                 $this->wg->add();

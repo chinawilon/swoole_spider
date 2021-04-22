@@ -87,6 +87,11 @@ class Cache implements CacheInterface
      */
     public function load(): void
     {
+        if (! file_exists($this->metadata) ) {
+            // Try to create it
+            file_put_contents($this->metadata, '');
+            return;
+        }
         $meta = file_get_contents($this->metadata);
         if ( $meta === '' ) {
             return;
